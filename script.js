@@ -296,23 +296,42 @@ function displayTeams() {
         teamBContainer.classList.add('team-red');
     }
     
-    // Ensure KHALID is always on the red team
+    // Ensure KHALID is always on the red team (swap with another player to maintain balance)
     const hasKhalid = currentTeams.teamA.includes('KHALID') || currentTeams.teamB.includes('KHALID');
     if (hasKhalid) {
         const khalidInTeamA = currentTeams.teamA.includes('KHALID');
         const redTeamIsA = teamAContainer.classList.contains('team-red');
         
-        // If KHALID is not on the red team, swap him
+        // If KHALID is not on the red team, swap him with another player to maintain balance
         if ((khalidInTeamA && !redTeamIsA) || (!khalidInTeamA && redTeamIsA)) {
-            // Remove KHALID from current team
             if (khalidInTeamA) {
+                // KHALID is in Team A but red team is Team B, swap with a player from Team B
                 const khalidIndex = currentTeams.teamA.indexOf('KHALID');
-                currentTeams.teamA.splice(khalidIndex, 1);
-                currentTeams.teamB.push('KHALID');
+                // Find a player from Team B to swap (prefer not AYOUBE, ISSAM, or ADIL due to conflicts)
+                const swapPlayer = currentTeams.teamB.find(p => 
+                    p !== 'AYOUBE' && p !== 'ISSAM' && p !== 'ADIL' && p !== 'YOUSSEF'
+                ) || currentTeams.teamB[0]; // fallback to first player if needed
+                
+                if (swapPlayer) {
+                    const swapIndex = currentTeams.teamB.indexOf(swapPlayer);
+                    // Swap the players
+                    currentTeams.teamA[khalidIndex] = swapPlayer;
+                    currentTeams.teamB[swapIndex] = 'KHALID';
+                }
             } else {
+                // KHALID is in Team B but red team is Team A, swap with a player from Team A
                 const khalidIndex = currentTeams.teamB.indexOf('KHALID');
-                currentTeams.teamB.splice(khalidIndex, 1);
-                currentTeams.teamA.push('KHALID');
+                // Find a player from Team A to swap (prefer not AYOUBE, ISSAM, or ADIL due to conflicts)
+                const swapPlayer = currentTeams.teamA.find(p => 
+                    p !== 'AYOUBE' && p !== 'ISSAM' && p !== 'ADIL' && p !== 'YOUSSEF'
+                ) || currentTeams.teamA[0]; // fallback to first player if needed
+                
+                if (swapPlayer) {
+                    const swapIndex = currentTeams.teamA.indexOf(swapPlayer);
+                    // Swap the players
+                    currentTeams.teamB[khalidIndex] = swapPlayer;
+                    currentTeams.teamA[swapIndex] = 'KHALID';
+                }
             }
         }
     }
