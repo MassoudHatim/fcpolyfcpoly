@@ -15,6 +15,12 @@ function checkAuth() {
     const passwordSubmit = document.getElementById('passwordSubmit');
     const passwordError = document.getElementById('passwordError');
     
+    // Check if elements exist
+    if (!overlay || !passwordInput || !passwordSubmit || !passwordError) {
+        console.error('Password protection elements not found');
+        return;
+    }
+    
     overlay.classList.remove('hidden');
     
     // Handle password submission
