@@ -230,6 +230,12 @@ function createTeams(playerArray) {
         issamTargetTeam = Math.random() < 0.5 ? 'A' : 'B';
     }
     
+    // Store team assignments for conflict players (but don't place them yet)
+    let adilTargetTeam = null;
+    let youssefTargetTeam = null;
+    let mohammedTargetTeam = null;
+    let khalidTargetTeam = 'A'; // KHALID always goes to Team A
+    
     // Handle ISSAM/ADIL conflict (they must be on different teams)
     if (hasIssam && hasAdil) {
         // If ISSAM not yet assigned, determine teams
@@ -238,13 +244,7 @@ function createTeams(playerArray) {
             issamTargetTeam = Math.random() < 0.5 ? 'A' : 'B';
         }
         // ADIL goes to opposite team of ISSAM
-        if (issamTargetTeam === 'A') {
-            teamB.push('ADIL');
-        } else {
-            teamA.push('ADIL');
-        }
-    } else if (hasAdil) {
-        // Only ADIL is playing, will be assigned later
+        adilTargetTeam = issamTargetTeam === 'A' ? 'B' : 'A';
     }
     
     // Handle remaining AYOUBE conflicts (YOUSSEF and MOHAMMED)
@@ -257,80 +257,79 @@ function createTeams(playerArray) {
         
         // YOUSSEF must go to opposite team of AYOUBE
         if (hasYoussef) {
-            if (ayoubeTargetTeam === 'A') {
-                teamB.push('YOUSSEF');
-            } else {
-                teamA.push('YOUSSEF');
-            }
+            youssefTargetTeam = ayoubeTargetTeam === 'A' ? 'B' : 'A';
         }
         
         // MOHAMMED: 50% chance to be with AYOUBE
         if (hasMohammed) {
-            if (Math.random() < 0.5) {
-                if (ayoubeTargetTeam === 'A') {
-                    teamA.push('MOHAMMED');
-                } else {
-                    teamB.push('MOHAMMED');
-                }
-            } else {
-                if (ayoubeTargetTeam === 'A') {
-                    teamB.push('MOHAMMED');
-                } else {
-                    teamA.push('MOHAMMED');
-                }
-            }
+            mohammedTargetTeam = Math.random() < 0.5 ? ayoubeTargetTeam : (ayoubeTargetTeam === 'A' ? 'B' : 'A');
         }
     }
     
-    // KHALID always goes to Team A (red team)
-    const hasKhalid = shuffled.includes('KHALID');
+    // Create a map of which team each player should go to
+    const playerTeamMap = new Map();
+    
+    // Assign conflict players to their teams
+    if (issamToAssign && issamTargetTeam) {
+        playerTeamMap.set('ISSAM', issamTargetTeam);
+    }
+    if (ayoubeToAssign && ayoubeTargetTeam) {
+        playerTeamMap.set('AYOUBE', ayoubeTargetTeam);
+    }
+    if (adilTargetTeam) {
+        playerTeamMap.set('ADIL', adilTargetTeam);
+    }
+    if (youssefTargetTeam) {
+        playerTeamMap.set('YOUSSEF', youssefTargetTeam);
+    }
+    if (mohammedTargetTeam) {
+        playerTeamMap.set('MOHAMMED', mohammedTargetTeam);
+    }
     if (hasKhalid) {
-        teamA.push('KHALID');
+        playerTeamMap.set('KHALID', khalidTargetTeam);
     }
     
-    // Distribute remaining players (excluding ISSAM and AYOUBE which will be placed later)
-    const remaining = shuffled.filter(p => 
-        p !== 'ISSAM' && p !== 'AYOUBE' && !teamA.includes(p) && !teamB.includes(p)
-    );
+    // Distribute all remaining players randomly to balance teams
+    const remaining = shuffled.filter(p => !playerTeamMap.has(p));
     
-    // Sort remaining by strength (strongest first) for better balancing
-    remaining.sort((a, b) => {
-        const strengthA = tierStrength[players[a].tier];
-        const strengthB = tierStrength[players[b].tier];
-        return strengthB - strengthA;
-    });
+    // Shuffle remaining players for randomness
+    const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
     
     // Distribute remaining players to balance teams
-    remaining.forEach((player, index) => {
+    shuffledRemaining.forEach((player) => {
         const teamAStrength = calculateTeamStrength(teamA);
         const teamBStrength = calculateTeamStrength(teamB);
         
         // Alternate or balance by strength
         if (teamAStrength <= teamBStrength) {
-            teamA.push(player);
+            playerTeamMap.set(player, 'A');
         } else {
-            teamB.push(player);
+            playerTeamMap.set(player, 'B');
         }
     });
     
-    // Now insert ISSAM and AYOUBE at random positions (2, 3, 5, or 6)
-    const randomPositions = [2, 3, 5, 6];
+    // Now place ALL players randomly in their assigned teams
+    const randomPositions = [1, 2, 3, 4, 5, 6]; // All positions are random now
     
-    if (issamToAssign && issamTargetTeam) {
-        const issamPosition = randomPositions[Math.floor(Math.random() * randomPositions.length)];
-        const targetTeam = issamTargetTeam === 'A' ? teamA : teamB;
-        // Ensure position is within team bounds
-        const insertPos = Math.min(issamPosition - 1, targetTeam.length);
-        targetTeam.splice(insertPos, 0, issamToAssign);
-    }
+    // Separate players by team
+    const teamAPlayers = [];
+    const teamBPlayers = [];
     
-    if (ayoubeToAssign && ayoubeTargetTeam) {
-        const ayoubePosition = randomPositions[Math.floor(Math.random() * randomPositions.length)];
-        const targetTeam = ayoubeTargetTeam === 'A' ? teamA : teamB;
-        // Ensure position is within team bounds
-        const insertPos = Math.min(ayoubePosition - 1, targetTeam.length);
-        targetTeam.splice(insertPos, 0, ayoubeToAssign);
-    }
+    playerTeamMap.forEach((team, player) => {
+        if (team === 'A') {
+            teamAPlayers.push(player);
+        } else {
+            teamBPlayers.push(player);
+        }
+    });
+    
+    // Shuffle players within each team for random placement
+    teamAPlayers.sort(() => Math.random() - 0.5);
+    teamBPlayers.sort(() => Math.random() - 0.5);
+    
+    // Assign to teams
+    teamA.push(...teamAPlayers);
+    teamB.push(...teamBPlayers);
     
     return { teamA, teamB };
 }
