@@ -48,8 +48,12 @@ function showContent() {
     }
 }
 
-// Initialize authentication check on page load
-checkAuth();
+// Initialize authentication check on page load (wait for DOM)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+    checkAuth();
+}
 
 // Player database with strength tiers and conflicts
 const players = {
