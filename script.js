@@ -42,6 +42,15 @@ function initPlayerList() {
     const playerList = document.getElementById('playerList');
     playerList.innerHTML = '';
     
+    // Define the 12 players to preselect
+    const preselectedPlayers = [
+        'KHALID', 'MEHDI', 'SOUFIANE', 'SAID',  // Top players
+        'YOUSSEF', 'AYOUBE',                     // Less players (selected)
+        'AKD', 'KAMAL', 'MOHAMMED TATI',         // Back players
+        'ISSAM', 'MOHAMMED',                     // Attackers
+        'ADIL'                                    // Less player
+    ];
+    
     Object.keys(players).forEach(playerName => {
         const btn = document.createElement('button');
         btn.className = 'player-btn';
@@ -49,9 +58,11 @@ function initPlayerList() {
         btn.addEventListener('click', () => togglePlayer(playerName, btn));
         playerList.appendChild(btn);
         
-        // Preselect all players by default
-        selectedPlayers.add(playerName);
-        btn.classList.add('selected');
+        // Preselect only the specified 12 players
+        if (preselectedPlayers.includes(playerName)) {
+            selectedPlayers.add(playerName);
+            btn.classList.add('selected');
+        }
     });
     
     updateSelectedCount();
@@ -134,62 +145,85 @@ function createTeams(playerArray) {
     const hasMohammed = shuffled.includes('MOHAMMED');
     const hasAdil = shuffled.includes('ADIL');
     
-    // Handle ISSAM/ADIL conflict first (they must be on different teams)
-    if (hasIssam && hasAdil) {
-        // Randomly assign ISSAM to a team, ADIL goes to the other
-        const issamTeam = Math.random() < 0.5 ? 'A' : 'B';
-        if (issamTeam === 'A') {
-            teamA.push('ISSAM');
-            teamB.push('ADIL');
-        } else {
+    // Handle ISSAM/AYOUBE conflict first (they must be on different teams - 100% enforced)
+    if (hasIssam && hasAyoube) {
+        // Randomly assign AYOUBE to a team, ISSAM goes to the other
+        const ayoubeTeam = Math.random() < 0.5 ? 'A' : 'B';
+        if (ayoubeTeam === 'A') {
+            teamA.push('AYOUBE');
             teamB.push('ISSAM');
-            teamA.push('ADIL');
+        } else {
+            teamB.push('AYOUBE');
+            teamA.push('ISSAM');
         }
+    } else if (hasAyoube) {
+        // Only AYOUBE is playing, will be assigned later
     } else if (hasIssam) {
         // Only ISSAM is playing, will be assigned later
-    } else if (hasAdil) {
+    }
+    
+    // Handle ISSAM/ADIL conflict (they must be on different teams)
+    if (hasIssam && hasAdil) {
+        // Only assign if ISSAM not already assigned by AYOUBE conflict
+        if (!teamA.includes('ISSAM') && !teamB.includes('ISSAM')) {
+            // Randomly assign ISSAM to a team, ADIL goes to the other
+            const issamTeam = Math.random() < 0.5 ? 'A' : 'B';
+            if (issamTeam === 'A') {
+                teamA.push('ISSAM');
+                teamB.push('ADIL');
+            } else {
+                teamB.push('ISSAM');
+                teamA.push('ADIL');
+            }
+        } else {
+            // ISSAM already assigned, put ADIL on opposite team
+            if (teamA.includes('ISSAM')) {
+                teamB.push('ADIL');
+            } else if (teamB.includes('ISSAM')) {
+                teamA.push('ADIL');
+            }
+        }
+    } else if (hasAdil && !teamA.includes('ADIL') && !teamB.includes('ADIL')) {
         // Only ADIL is playing, will be assigned later
     }
     
-    // Handle AYOUBE conflicts
+    // Handle remaining AYOUBE conflicts (YOUSSEF and MOHAMMED)
     if (hasAyoube) {
-        // Randomly assign AYOUBE to a team
-        const ayoubeTeam = Math.random() < 0.5 ? 'A' : 'B';
-        
-        if (ayoubeTeam === 'A') {
-            teamA.push('AYOUBE');
-            // ISSAM and YOUSSEF must go to Team B (but only if ISSAM not already assigned)
-            if (hasIssam && !teamA.includes('ISSAM') && !teamB.includes('ISSAM')) {
-                teamB.push('ISSAM');
+        // AYOUBE already assigned above if ISSAM is playing, otherwise assign now
+        if (!teamA.includes('AYOUBE') && !teamB.includes('AYOUBE')) {
+            const ayoubeTeam = Math.random() < 0.5 ? 'A' : 'B';
+            if (ayoubeTeam === 'A') {
+                teamA.push('AYOUBE');
+            } else {
+                teamB.push('AYOUBE');
             }
-            if (hasYoussef) teamB.push('YOUSSEF');
-            // MOHAMMED: 50% chance to be with AYOUBE
-            if (hasMohammed) {
-                if (Math.random() < 0.5) {
+        }
+        
+        // YOUSSEF must go to opposite team of AYOUBE
+        if (hasYoussef) {
+            if (teamA.includes('AYOUBE')) {
+                teamB.push('YOUSSEF');
+            } else {
+                teamA.push('YOUSSEF');
+            }
+        }
+        
+        // MOHAMMED: 50% chance to be with AYOUBE
+        if (hasMohammed && !teamA.includes('MOHAMMED') && !teamB.includes('MOHAMMED')) {
+            if (Math.random() < 0.5) {
+                if (teamA.includes('AYOUBE')) {
                     teamA.push('MOHAMMED');
                 } else {
                     teamB.push('MOHAMMED');
                 }
-            }
-        } else {
-            teamB.push('AYOUBE');
-            // ISSAM and YOUSSEF must go to Team A (but only if ISSAM not already assigned)
-            if (hasIssam && !teamA.includes('ISSAM') && !teamB.includes('ISSAM')) {
-                teamA.push('ISSAM');
-            }
-            if (hasYoussef) teamA.push('YOUSSEF');
-            // MOHAMMED: 50% chance to be with AYOUBE
-            if (hasMohammed) {
-                if (Math.random() < 0.5) {
+            } else {
+                if (teamA.includes('AYOUBE')) {
                     teamB.push('MOHAMMED');
                 } else {
                     teamA.push('MOHAMMED');
                 }
             }
         }
-    } else {
-        // No AYOUBE, no conflict restrictions
-        // Just randomly assign ISSAM, YOUSSEF, MOHAMMED if present
     }
     
     // Distribute remaining players
