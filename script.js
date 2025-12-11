@@ -301,6 +301,12 @@ function createTeams(playerArray) {
         playerTeamMap.set('KHALID', khalidTargetTeam);
     }
     
+    // Distribute all remaining players randomly to balance teams
+    const remaining = shuffled.filter(p => !playerTeamMap.has(p));
+    
+    // Shuffle remaining players for randomness
+    const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
+    
     // Helper function to calculate team strength from playerTeamMap
     function calculateTeamStrengthFromMap(teamLetter) {
         let strength = 0;
@@ -311,12 +317,6 @@ function createTeams(playerArray) {
         });
         return strength;
     }
-    
-    // Distribute all remaining players randomly to balance teams
-    const remaining = shuffled.filter(p => !playerTeamMap.has(p));
-    
-    // Shuffle remaining players for randomness
-    const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
     
     // Distribute remaining players to balance teams
     shuffledRemaining.forEach((player) => {
@@ -359,18 +359,9 @@ function createTeams(playerArray) {
         }
     });
     
-    // Properly shuffle players within each team for truly random placement
-    // Use Fisher-Yates shuffle for better randomness
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-    
-    shuffleArray(teamAPlayers);
-    shuffleArray(teamBPlayers);
+    // Shuffle players within each team for random placement
+    teamAPlayers.sort(() => Math.random() - 0.5);
+    teamBPlayers.sort(() => Math.random() - 0.5);
     
     // Assign to teams
     teamA.push(...teamAPlayers);
