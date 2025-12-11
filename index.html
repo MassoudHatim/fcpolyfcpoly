@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Picker - Football Team Builder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ Team Picker</h1>
+            <p class="subtitle">Select players and generate balanced teams</p>
+        </header>
+
+        <div class="main-content">
+            <div class="selection-section">
+                <h2>Select Players</h2>
+                <p class="selection-info">Click players to select/deselect. Need exactly 10 or 12 players.</p>
+                <div class="selected-count">
+                    <span id="selectedCount">0</span> players selected
+                </div>
+                <div id="playerList" class="player-list"></div>
+                <button id="generateBtn" class="generate-btn" disabled>Generate Teams</button>
+            </div>
+
+            <div id="teamsSection" class="teams-section hidden">
+                <h2>Teams</h2>
+                <div class="teams-container">
+                    <div class="team team-a">
+                        <h3>Team A</h3>
+                        <ul id="teamA" class="team-list"></ul>
+                    </div>
+                    <div class="team team-b">
+                        <h3>Team B</h3>
+                        <ul id="teamB" class="team-list"></ul>
+                    </div>
+                </div>
+                <button id="reshuffleBtn" class="reshuffle-btn">Reshuffle Teams</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
