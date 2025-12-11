@@ -48,7 +48,14 @@ function initPlayerList() {
         btn.textContent = playerName;
         btn.addEventListener('click', () => togglePlayer(playerName, btn));
         playerList.appendChild(btn);
+        
+        // Preselect all players by default
+        selectedPlayers.add(playerName);
+        btn.classList.add('selected');
     });
+    
+    updateSelectedCount();
+    updateGenerateButton();
 }
 
 // Toggle player selection
