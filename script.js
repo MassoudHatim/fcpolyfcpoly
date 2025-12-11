@@ -234,6 +234,7 @@ function createTeams(playerArray) {
     let adilTargetTeam = null;
     let youssefTargetTeam = null;
     let mohammedTargetTeam = null;
+    const hasKhalid = shuffled.includes('KHALID');
     let khalidTargetTeam = 'A'; // KHALID always goes to Team A
     
     // Handle ISSAM/ADIL conflict (they must be on different teams)
