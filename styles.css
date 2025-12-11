@@ -151,12 +151,12 @@ header h1 {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.team-a {
+.team-red {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white;
 }
 
-.team-b {
+.team-green {
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
     color: white;
 }

@@ -273,10 +273,49 @@ function displayTeams() {
     const selectionSection = document.querySelector('.selection-section');
     const teamAList = document.getElementById('teamA');
     const teamBList = document.getElementById('teamB');
+    const teamAContainer = teamAList.closest('.team');
+    const teamBContainer = teamBList.closest('.team');
     
     // Hide selection section and show teams section
     selectionSection.classList.add('hidden');
     teamsSection.classList.remove('hidden');
+    
+    // Randomly assign red/green colors to teams
+    const teamAIsRed = Math.random() < 0.5;
+    
+    // Remove existing color classes
+    teamAContainer.classList.remove('team-red', 'team-green');
+    teamBContainer.classList.remove('team-red', 'team-green');
+    
+    // Assign colors randomly
+    if (teamAIsRed) {
+        teamAContainer.classList.add('team-red');
+        teamBContainer.classList.add('team-green');
+    } else {
+        teamAContainer.classList.add('team-green');
+        teamBContainer.classList.add('team-red');
+    }
+    
+    // Ensure KHALID is always on the red team
+    const hasKhalid = currentTeams.teamA.includes('KHALID') || currentTeams.teamB.includes('KHALID');
+    if (hasKhalid) {
+        const khalidInTeamA = currentTeams.teamA.includes('KHALID');
+        const redTeamIsA = teamAContainer.classList.contains('team-red');
+        
+        // If KHALID is not on the red team, swap him
+        if ((khalidInTeamA && !redTeamIsA) || (!khalidInTeamA && redTeamIsA)) {
+            // Remove KHALID from current team
+            if (khalidInTeamA) {
+                const khalidIndex = currentTeams.teamA.indexOf('KHALID');
+                currentTeams.teamA.splice(khalidIndex, 1);
+                currentTeams.teamB.push('KHALID');
+            } else {
+                const khalidIndex = currentTeams.teamB.indexOf('KHALID');
+                currentTeams.teamB.splice(khalidIndex, 1);
+                currentTeams.teamA.push('KHALID');
+            }
+        }
+    }
     
     teamAList.innerHTML = '';
     teamBList.innerHTML = '';
