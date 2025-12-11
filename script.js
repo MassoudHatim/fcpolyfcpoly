@@ -1,3 +1,56 @@
+// Password protection
+const SITE_PASSWORD = 'fcpoly2024'; // Change this to your desired password
+
+// Check authentication
+function checkAuth() {
+    // Check if already authenticated in this session
+    if (sessionStorage.getItem('authenticated') === 'true') {
+        showContent();
+        return;
+    }
+    
+    // Show password prompt
+    const overlay = document.getElementById('passwordOverlay');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordSubmit = document.getElementById('passwordSubmit');
+    const passwordError = document.getElementById('passwordError');
+    
+    overlay.classList.remove('hidden');
+    
+    // Handle password submission
+    function handleSubmit() {
+        const enteredPassword = passwordInput.value;
+        
+        if (enteredPassword === SITE_PASSWORD) {
+            sessionStorage.setItem('authenticated', 'true');
+            showContent();
+        } else {
+            passwordError.textContent = 'Incorrect password. Please try again.';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+    
+    passwordSubmit.addEventListener('click', handleSubmit);
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSubmit();
+        }
+    });
+}
+
+function showContent() {
+    document.getElementById('passwordOverlay').classList.add('hidden');
+    document.getElementById('mainContent').style.display = 'block';
+    // Initialize app after showing content
+    if (typeof initApp === 'function') {
+        initApp();
+    }
+}
+
+// Initialize authentication check on page load
+checkAuth();
+
 // Player database with strength tiers and conflicts
 const players = {
     // Top players (midfield) - equal strength
@@ -352,10 +405,18 @@ function displayTeams() {
     });
 }
 
-// Event listeners
-document.getElementById('generateBtn').addEventListener('click', generateTeams);
-document.getElementById('reshuffleBtn').addEventListener('click', generateTeams);
+// Initialize app (only after authentication)
+function initApp() {
+    // Event listeners
+    document.getElementById('generateBtn').addEventListener('click', generateTeams);
+    document.getElementById('reshuffleBtn').addEventListener('click', generateTeams);
+    
+    // Initialize player list
+    initPlayerList();
+}
 
-// Initialize on load
-initPlayerList();
+// Initialize app if already authenticated on page load
+if (sessionStorage.getItem('authenticated') === 'true') {
+    // App will be initialized by showContent() which is called by checkAuth()
+}
 
