@@ -327,11 +327,20 @@ function createTeams(playerArray) {
         const teamACount = Array.from(playerTeamMap.values()).filter(t => t === 'A').length;
         const teamBCount = Array.from(playerTeamMap.values()).filter(t => t === 'B').length;
         
-        // Balance by both strength and count
-        if (teamACount < teamBCount || (teamACount === teamBCount && teamAStrength <= teamBStrength)) {
+        // Balance by both strength and count - prioritize count balance
+        if (teamACount < teamBCount) {
+            // Team A has fewer players, assign to A
             playerTeamMap.set(player, 'A');
-        } else {
+        } else if (teamBCount < teamACount) {
+            // Team B has fewer players, assign to B
             playerTeamMap.set(player, 'B');
+        } else {
+            // Equal count, balance by strength
+            if (teamAStrength <= teamBStrength) {
+                playerTeamMap.set(player, 'A');
+            } else {
+                playerTeamMap.set(player, 'B');
+            }
         }
     });
     
