@@ -226,6 +226,12 @@ function createTeams(playerArray) {
         }
     }
     
+    // KHALID always goes to Team A (red team)
+    const hasKhalid = shuffled.includes('KHALID');
+    if (hasKhalid && !teamA.includes('KHALID') && !teamB.includes('KHALID')) {
+        teamA.push('KHALID');
+    }
+    
     // Distribute remaining players
     const remaining = shuffled.filter(p => 
         !teamA.includes(p) && !teamB.includes(p)
