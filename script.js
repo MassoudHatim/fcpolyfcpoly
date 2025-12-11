@@ -245,6 +245,9 @@ function createTeams(playerArray) {
         }
         // ADIL goes to opposite team of ISSAM
         adilTargetTeam = issamTargetTeam === 'A' ? 'B' : 'A';
+    } else if (hasAdil) {
+        // ADIL only has conflict with ISSAM, so if ISSAM not playing, ADIL can go anywhere
+        // Will be assigned randomly later
     }
     
     // Handle remaining AYOUBE conflicts (YOUSSEF and MOHAMMED)
@@ -264,7 +267,15 @@ function createTeams(playerArray) {
         if (hasMohammed) {
             mohammedTargetTeam = Math.random() < 0.5 ? ayoubeTargetTeam : (ayoubeTargetTeam === 'A' ? 'B' : 'A');
         }
+    } else if (hasYoussef) {
+        // YOUSSEF only has conflict with AYOUBE, so if AYOUBE not playing, YOUSSEF can go anywhere
+        // Will be assigned randomly later
     }
+    
+    // YOUSSEF and ADIL have no conflict with each other
+    // When both ISSAM and AYOUBE are playing, they will be on different teams due to other conflicts
+    // But when only one is playing, or neither, they can be together
+    // The current logic already handles this correctly
     
     // Create a map of which team each player should go to
     const playerTeamMap = new Map();
@@ -323,9 +334,18 @@ function createTeams(playerArray) {
         }
     });
     
-    // Shuffle players within each team for random placement
-    teamAPlayers.sort(() => Math.random() - 0.5);
-    teamBPlayers.sort(() => Math.random() - 0.5);
+    // Properly shuffle players within each team for truly random placement
+    // Use Fisher-Yates shuffle for better randomness
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
+    shuffleArray(teamAPlayers);
+    shuffleArray(teamBPlayers);
     
     // Assign to teams
     teamA.push(...teamAPlayers);
