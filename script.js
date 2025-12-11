@@ -301,6 +301,17 @@ function createTeams(playerArray) {
         playerTeamMap.set('KHALID', khalidTargetTeam);
     }
     
+    // Helper function to calculate team strength from playerTeamMap
+    function calculateTeamStrengthFromMap(teamLetter) {
+        let strength = 0;
+        playerTeamMap.forEach((team, player) => {
+            if (team === teamLetter) {
+                strength += (tierStrength[players[player].tier] || 0);
+            }
+        });
+        return strength;
+    }
+    
     // Distribute all remaining players randomly to balance teams
     const remaining = shuffled.filter(p => !playerTeamMap.has(p));
     
@@ -309,11 +320,15 @@ function createTeams(playerArray) {
     
     // Distribute remaining players to balance teams
     shuffledRemaining.forEach((player) => {
-        const teamAStrength = calculateTeamStrength(teamA);
-        const teamBStrength = calculateTeamStrength(teamB);
+        const teamAStrength = calculateTeamStrengthFromMap('A');
+        const teamBStrength = calculateTeamStrengthFromMap('B');
         
-        // Alternate or balance by strength
-        if (teamAStrength <= teamBStrength) {
+        // Also check player count for balance
+        const teamACount = Array.from(playerTeamMap.values()).filter(t => t === 'A').length;
+        const teamBCount = Array.from(playerTeamMap.values()).filter(t => t === 'B').length;
+        
+        // Balance by both strength and count
+        if (teamACount < teamBCount || (teamACount === teamBCount && teamAStrength <= teamBStrength)) {
             playerTeamMap.set(player, 'A');
         } else {
             playerTeamMap.set(player, 'B');
