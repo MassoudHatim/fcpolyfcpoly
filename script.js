@@ -264,9 +264,12 @@ function calculateTeamStrength(team) {
 // Display teams
 function displayTeams() {
     const teamsSection = document.getElementById('teamsSection');
+    const selectionSection = document.querySelector('.selection-section');
     const teamAList = document.getElementById('teamA');
     const teamBList = document.getElementById('teamB');
     
+    // Hide selection section and show teams section
+    selectionSection.classList.add('hidden');
     teamsSection.classList.remove('hidden');
     
     teamAList.innerHTML = '';
