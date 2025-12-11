@@ -18,11 +18,11 @@ const players = {
     'MOHAMMED TATI': { tier: 'back', conflicts: [] },
     
     // Attackers
-    'ISSAM': { tier: 'attacker', conflicts: ['AYOUBE'] },
+    'ISSAM': { tier: 'attacker', conflicts: ['AYOUBE', 'ADIL'] },
     'MOHAMMED': { tier: 'attacker', conflicts: ['AYOUBE'] }, // 50% conflict
     
     // Less players
-    'ADIL': { tier: 'less', conflicts: [] },
+    'ADIL': { tier: 'less', conflicts: ['ISSAM'] },
     'ABDELLAH': { tier: 'less', conflicts: [] }
 };
 
@@ -125,6 +125,24 @@ function createTeams(playerArray) {
     const hasIssam = shuffled.includes('ISSAM');
     const hasYoussef = shuffled.includes('YOUSSEF');
     const hasMohammed = shuffled.includes('MOHAMMED');
+    const hasAdil = shuffled.includes('ADIL');
+    
+    // Handle ISSAM/ADIL conflict first (they must be on different teams)
+    if (hasIssam && hasAdil) {
+        // Randomly assign ISSAM to a team, ADIL goes to the other
+        const issamTeam = Math.random() < 0.5 ? 'A' : 'B';
+        if (issamTeam === 'A') {
+            teamA.push('ISSAM');
+            teamB.push('ADIL');
+        } else {
+            teamB.push('ISSAM');
+            teamA.push('ADIL');
+        }
+    } else if (hasIssam) {
+        // Only ISSAM is playing, will be assigned later
+    } else if (hasAdil) {
+        // Only ADIL is playing, will be assigned later
+    }
     
     // Handle AYOUBE conflicts
     if (hasAyoube) {
@@ -133,8 +151,10 @@ function createTeams(playerArray) {
         
         if (ayoubeTeam === 'A') {
             teamA.push('AYOUBE');
-            // ISSAM and YOUSSEF must go to Team B
-            if (hasIssam) teamB.push('ISSAM');
+            // ISSAM and YOUSSEF must go to Team B (but only if ISSAM not already assigned)
+            if (hasIssam && !teamA.includes('ISSAM') && !teamB.includes('ISSAM')) {
+                teamB.push('ISSAM');
+            }
             if (hasYoussef) teamB.push('YOUSSEF');
             // MOHAMMED: 50% chance to be with AYOUBE
             if (hasMohammed) {
@@ -146,8 +166,10 @@ function createTeams(playerArray) {
             }
         } else {
             teamB.push('AYOUBE');
-            // ISSAM and YOUSSEF must go to Team A
-            if (hasIssam) teamA.push('ISSAM');
+            // ISSAM and YOUSSEF must go to Team A (but only if ISSAM not already assigned)
+            if (hasIssam && !teamA.includes('ISSAM') && !teamB.includes('ISSAM')) {
+                teamA.push('ISSAM');
+            }
             if (hasYoussef) teamA.push('YOUSSEF');
             // MOHAMMED: 50% chance to be with AYOUBE
             if (hasMohammed) {
