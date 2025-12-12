@@ -677,11 +677,16 @@ async function validateTeams() {
         // Save next match (localStorage + optional API)
         await DataService.saveNextMatch(nextMatchData);
 
+        // Get match result
+        const matchResultInput = document.getElementById('matchResult');
+        const matchResult = matchResultInput && matchResultInput.value ? matchResultInput.value.trim() : 'Not played';
+
         // Save to historique matches
         const historiqueData = {
             date: matchDate,
             teamA: currentTeams.teamA,
-            teamB: currentTeams.teamB
+            teamB: currentTeams.teamB,
+            result: matchResult
         };
 
         await DataService.saveHistoriqueMatch(historiqueData);
@@ -796,35 +801,71 @@ function displayHistoriqueMatches(matches) {
 
     historiqueList.innerHTML = '';
 
-    matches.forEach(match => {
+    matches.forEach((match, index) => {
         const matchCard = document.createElement('div');
-        matchCard.className = 'match-card';
+        matchCard.className = 'match-card-overview';
+        matchCard.setAttribute('data-match-index', index);
 
         const date = new Date(match.date);
-        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString();
+        const result = match.result || 'Not played';
 
+        // Overview card (collapsed by default)
         matchCard.innerHTML = `
-            <div class="match-header">
-                <h3>Match - ${dateStr}</h3>
-            </div>
-            <div class="match-teams">
-                <div class="match-team">
-                    <h4>Team A</h4>
-                    <ul>
-                        ${match.teamA.map(player => `<li>${player}</li>`).join('')}
-                    </ul>
+            <div class="match-card-header">
+                <div class="match-overview">
+                    <div class="match-vs">
+                        <span class="team-label">Team A</span>
+                        <span class="vs-divider">vs</span>
+                        <span class="team-label">Team B</span>
+                    </div>
+                    <div class="match-result">${result}</div>
+                    <div class="match-date">${dateStr} at ${timeStr}</div>
                 </div>
-                <div class="match-team">
-                    <h4>Team B</h4>
-                    <ul>
-                        ${match.teamB.map(player => `<li>${player}</li>`).join('')}
-                    </ul>
+                <div class="match-toggle-icon">▼</div>
+            </div>
+            <div class="match-card-details" id="match-details-${index}" style="display: none;">
+                <div class="match-teams-detail">
+                    <div class="match-team-detail">
+                        <h4>Team A</h4>
+                        <ul>
+                            ${match.teamA.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="match-team-detail">
+                        <h4>Team B</h4>
+                        <ul>
+                            ${match.teamB.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
                 </div>
             </div>
         `;
 
+        // Add click event listener to header
+        const header = matchCard.querySelector('.match-card-header');
+        header.addEventListener('click', () => toggleMatchDetails(index));
+
         historiqueList.appendChild(matchCard);
     });
+}
+
+// Toggle match details on card click
+function toggleMatchDetails(index) {
+    const details = document.getElementById(`match-details-${index}`);
+    const card = document.querySelector(`[data-match-index="${index}"]`);
+    const icon = card.querySelector('.match-toggle-icon');
+    
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        icon.textContent = '▲';
+        card.classList.add('expanded');
+    } else {
+        details.style.display = 'none';
+        icon.textContent = '▼';
+        card.classList.remove('expanded');
+    }
 }
 
 // Initialize app (only after authentication)
