@@ -59,6 +59,19 @@ async function checkAuth() {
             await handleSubmit();
         }
     });
+    
+    // Clear cache button
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', () => {
+            // Clear session storage
+            sessionStorage.clear();
+            // Clear local storage
+            localStorage.clear();
+            // Reload page with cache bypass
+            window.location.reload(true);
+        });
+    }
 }
 
 function showContent() {
