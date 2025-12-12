@@ -643,6 +643,19 @@ function displayTeams() {
         li.textContent = player;
         teamBList.appendChild(li);
     });
+    
+    // Set default date/time to current date/time
+    const matchDateTimeInput = document.getElementById('matchDateTime');
+    if (matchDateTimeInput) {
+        const now = new Date();
+        // Format: YYYY-MM-DDTHH:mm (datetime-local format)
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        matchDateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 }
 
 // Validate teams and save (localStorage + optional API)
@@ -652,8 +665,20 @@ async function validateTeams() {
         return;
     }
 
+    // Get the selected match date/time
+    const matchDateTimeInput = document.getElementById('matchDateTime');
+    let matchDate;
+    
+    if (matchDateTimeInput && matchDateTimeInput.value) {
+        // Use the selected date/time
+        matchDate = new Date(matchDateTimeInput.value).toISOString();
+    } else {
+        // Fallback to current date/time if not set
+        alert('Please select a match date and time');
+        return;
+    }
+
     try {
-        const matchDate = new Date().toISOString();
         const nextMatchData = {
             date: matchDate,
             teamA: currentTeams.teamA,
