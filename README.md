@@ -9,6 +9,10 @@ A static website for generating balanced football teams for 5v5 or 6v6 matches.
 - Automatic team balancing based on player strength
 - Conflict resolution (prevents certain players from being on the same team)
 - Works for 10 players (5v5) or 12 players (6v6)
+- JSON Server integration for data persistence
+- Team validation and history tracking
+- Next Match Team section displaying validated teams
+- Historique Matches section showing match history with dates
 
 ## Deployment to GitHub Pages
 
@@ -24,14 +28,43 @@ A static website for generating balanced football teams for 5v5 or 6v6 matches.
 - `index.html` - Main HTML structure
 - `styles.css` - Styling
 - `script.js` - Team generation logic and player database
+- `db.json` - JSON Server database file
+
+## Setup
+
+### 1. Install JSON Server
+
+```bash
+npm install -g json-server
+```
+
+### 2. Start JSON Server
+
+```bash
+json-server --watch db.json --port 3000
+```
+
+The server will run on `http://localhost:3000`
+
+### 3. Update API URL (if needed)
+
+If your JSON Server runs on a different URL or port, update the `API_URL` constant in `script.js`:
+
+```javascript
+const API_URL = 'http://localhost:3000'; // Change this if needed
+```
 
 ## Usage
 
-1. Open `index.html` in a browser
-2. Click on player names to select/deselect them
-3. Select exactly 10 or 12 players
-4. Click "Generate Teams" to create balanced teams
-5. Use "Reshuffle Teams" to regenerate with different combinations
+1. Make sure JSON Server is running (see Setup above)
+2. Open `index.html` in a browser
+3. Click on player names to select/deselect them
+4. Select exactly 10 or 12 players
+5. Click "Generate Teams" to create balanced teams
+6. Use "Reshuffle Teams" to regenerate with different combinations
+7. Click "Validate Teams" to save the teams as the next match and add to history
+8. View the "Next Match Team" section to see the validated team
+9. View the "Historique Matches" section to see all past matches with dates
 
 ## Password
 

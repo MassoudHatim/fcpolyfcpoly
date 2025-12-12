@@ -303,6 +303,121 @@ header h1 {
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
+.team-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.validate-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+
+.validate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+}
+
+.next-match-section {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.next-match-section.hidden {
+    display: none;
+}
+
+.next-match-section h2 {
+    margin-bottom: 30px;
+    color: #667eea;
+    text-align: center;
+}
+
+.match-date {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    margin-top: 20px;
+}
+
+.historique-section {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.historique-section h2 {
+    margin-bottom: 30px;
+    color: #667eea;
+    text-align: center;
+}
+
+.historique-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.match-card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.match-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.match-header h3 {
+    color: #667eea;
+    font-size: 1.2rem;
+}
+
+.match-teams {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.match-team h4 {
+    color: #764ba2;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.match-team ul {
+    list-style: none;
+}
+
+.match-team ul li {
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.no-matches {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+}
+
 @media (max-width: 768px) {
     header h1 {
         font-size: 2rem;
@@ -318,6 +433,14 @@ header h1 {
     }
 
     .teams-container {
+        grid-template-columns: 1fr;
+    }
+
+    .team-actions {
+        flex-direction: column;
+    }
+
+    .match-teams {
         grid-template-columns: 1fr;
     }
 }

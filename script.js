@@ -53,6 +53,9 @@ const players = {
     'ABDELLAH': { tier: 'everywhere', conflicts: [] }
 };
 
+// JSON Server configuration
+const API_URL = 'http://localhost:3000'; // Change this to your JSON Server URL
+
 let selectedPlayers = new Set();
 let currentTeams = { teamA: [], teamB: [] };
 
@@ -283,6 +286,79 @@ function createTeams(playerArray) {
         playerTeamMap.set('KHALID', khalidTargetTeam);
     }
     
+    // MIDFIELD DISTRIBUTION LOGIC
+    const midfielders = ['KHALID', 'MEHDI', 'SOUFIANE', 'SAID'].filter(p => shuffled.includes(p));
+    const otherMidfielders = ['MEHDI', 'SOUFIANE', 'SAID'].filter(p => shuffled.includes(p));
+    
+    if (hasKhalid) {
+        // KHALID is playing - apply special distribution rules
+        if (otherMidfielders.length === 3) {
+            // 4 midfielders total: KHALID + 1 on red (Team A), 2 on green (Team B)
+            const khalidPartner = otherMidfielders[Math.floor(Math.random() * otherMidfielders.length)];
+            const greenMidfielders = otherMidfielders.filter(m => m !== khalidPartner);
+            
+            if (!playerTeamMap.has(khalidPartner)) {
+                playerTeamMap.set(khalidPartner, 'A'); // With KHALID on Team A (red)
+            }
+            greenMidfielders.forEach(midfielder => {
+                if (!playerTeamMap.has(midfielder)) {
+                    playerTeamMap.set(midfielder, 'B'); // On Team B (green)
+                }
+            });
+        } else if (otherMidfielders.length === 2) {
+            // 3 midfielders total: KHALID + 1 on red (Team A), 1 on green (Team B)
+            const khalidPartner = otherMidfielders[Math.floor(Math.random() * otherMidfielders.length)];
+            const greenMidfielder = otherMidfielders.find(m => m !== khalidPartner);
+            
+            if (!playerTeamMap.has(khalidPartner)) {
+                playerTeamMap.set(khalidPartner, 'A'); // With KHALID on Team A (red)
+            }
+            if (greenMidfielder && !playerTeamMap.has(greenMidfielder)) {
+                playerTeamMap.set(greenMidfielder, 'B'); // On Team B (green)
+            }
+        } else if (otherMidfielders.length === 1) {
+            // 2 midfielders total: KHALID on red (Team A), 1 on green (Team B)
+            const greenMidfielder = otherMidfielders[0];
+            if (!playerTeamMap.has(greenMidfielder)) {
+                playerTeamMap.set(greenMidfielder, 'B'); // On Team B (green)
+            }
+        }
+        // If only KHALID (1 midfielder), he's already assigned to Team A
+    } else {
+        // KHALID is NOT playing - distribute evenly
+        if (otherMidfielders.length === 3) {
+            // 3 midfielders: 2 on one team, 1 on other team (random)
+            const teamWithTwo = Math.random() < 0.5 ? 'A' : 'B';
+            const teamWithOne = teamWithTwo === 'A' ? 'B' : 'A';
+            
+            const shuffledMids = [...otherMidfielders].sort(() => Math.random() - 0.5);
+            if (!playerTeamMap.has(shuffledMids[0])) {
+                playerTeamMap.set(shuffledMids[0], teamWithTwo);
+            }
+            if (!playerTeamMap.has(shuffledMids[1])) {
+                playerTeamMap.set(shuffledMids[1], teamWithTwo);
+            }
+            if (!playerTeamMap.has(shuffledMids[2])) {
+                playerTeamMap.set(shuffledMids[2], teamWithOne);
+            }
+        } else if (otherMidfielders.length === 2) {
+            // 2 midfielders: 1 on each team
+            const shuffledMids = [...otherMidfielders].sort(() => Math.random() - 0.5);
+            if (!playerTeamMap.has(shuffledMids[0])) {
+                playerTeamMap.set(shuffledMids[0], 'A');
+            }
+            if (!playerTeamMap.has(shuffledMids[1])) {
+                playerTeamMap.set(shuffledMids[1], 'B');
+            }
+        } else if (otherMidfielders.length === 1) {
+            // 1 midfielder: goes to one team (random)
+            const team = Math.random() < 0.5 ? 'A' : 'B';
+            if (!playerTeamMap.has(otherMidfielders[0])) {
+                playerTeamMap.set(otherMidfielders[0], team);
+            }
+        }
+    }
+    
     // Distribute all remaining players randomly to balance teams
     const remaining = shuffled.filter(p => !playerTeamMap.has(p));
     
@@ -369,60 +445,29 @@ function displayTeams() {
     selectionSection.classList.add('hidden');
     teamsSection.classList.remove('hidden');
     
-    // Randomly assign red/green colors to teams
-    const teamAIsRed = Math.random() < 0.5;
+    // Determine which team should be red
+    const hasKhalid = currentTeams.teamA.includes('KHALID') || currentTeams.teamB.includes('KHALID');
+    let teamAIsRed;
+    
+    if (hasKhalid) {
+        // KHALID's team becomes red
+        teamAIsRed = currentTeams.teamA.includes('KHALID');
+    } else {
+        // If KHALID not playing, randomly assign red/green
+        teamAIsRed = Math.random() < 0.5;
+    }
     
     // Remove existing color classes
     teamAContainer.classList.remove('team-red', 'team-green');
     teamBContainer.classList.remove('team-red', 'team-green');
     
-    // Assign colors randomly
+    // Assign colors
     if (teamAIsRed) {
         teamAContainer.classList.add('team-red');
         teamBContainer.classList.add('team-green');
     } else {
         teamAContainer.classList.add('team-green');
         teamBContainer.classList.add('team-red');
-    }
-    
-    // Ensure KHALID is always on the red team (swap with another player to maintain balance)
-    const hasKhalid = currentTeams.teamA.includes('KHALID') || currentTeams.teamB.includes('KHALID');
-    if (hasKhalid) {
-        const khalidInTeamA = currentTeams.teamA.includes('KHALID');
-        const redTeamIsA = teamAContainer.classList.contains('team-red');
-        
-        // If KHALID is not on the red team, swap him with another player to maintain balance
-        if ((khalidInTeamA && !redTeamIsA) || (!khalidInTeamA && redTeamIsA)) {
-            if (khalidInTeamA) {
-                // KHALID is in Team A but red team is Team B, swap with a player from Team B
-                const khalidIndex = currentTeams.teamA.indexOf('KHALID');
-                // Find a player from Team B to swap (prefer not AYOUBE, ISSAM, or ADIL due to conflicts)
-                const swapPlayer = currentTeams.teamB.find(p => 
-                    p !== 'AYOUBE' && p !== 'ISSAM' && p !== 'ADIL' && p !== 'YOUSSEF'
-                ) || currentTeams.teamB[0]; // fallback to first player if needed
-                
-                if (swapPlayer) {
-                    const swapIndex = currentTeams.teamB.indexOf(swapPlayer);
-                    // Swap the players
-                    currentTeams.teamA[khalidIndex] = swapPlayer;
-                    currentTeams.teamB[swapIndex] = 'KHALID';
-                }
-            } else {
-                // KHALID is in Team B but red team is Team A, swap with a player from Team A
-                const khalidIndex = currentTeams.teamB.indexOf('KHALID');
-                // Find a player from Team A to swap (prefer not AYOUBE, ISSAM, or ADIL due to conflicts)
-                const swapPlayer = currentTeams.teamA.find(p => 
-                    p !== 'AYOUBE' && p !== 'ISSAM' && p !== 'ADIL' && p !== 'YOUSSEF'
-                ) || currentTeams.teamA[0]; // fallback to first player if needed
-                
-                if (swapPlayer) {
-                    const swapIndex = currentTeams.teamA.indexOf(swapPlayer);
-                    // Swap the players
-                    currentTeams.teamB[khalidIndex] = swapPlayer;
-                    currentTeams.teamA[swapIndex] = 'KHALID';
-                }
-            }
-        }
     }
     
     teamAList.innerHTML = '';
@@ -441,14 +486,225 @@ function displayTeams() {
     });
 }
 
+// Validate teams and save to JSON Server
+async function validateTeams() {
+    if (!currentTeams.teamA.length || !currentTeams.teamB.length) {
+        alert('Please generate teams first');
+        return;
+    }
+
+    try {
+        // Save as next match team
+        const matchDate = new Date().toISOString();
+        const nextMatchData = {
+            id: 1, // Single next match record
+            date: matchDate,
+            teamA: currentTeams.teamA,
+            teamB: currentTeams.teamB,
+            validated: true
+        };
+
+        // Update or create next match
+        const response = await fetch(`${API_URL}/nextMatch/1`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(nextMatchData)
+        });
+
+        if (!response.ok) {
+            // If PUT fails, try POST
+            await fetch(`${API_URL}/nextMatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(nextMatchData)
+            });
+        }
+
+        // Save to historique matches
+        const historiqueData = {
+            date: matchDate,
+            teamA: currentTeams.teamA,
+            teamB: currentTeams.teamB
+        };
+
+        await fetch(`${API_URL}/historique`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(historiqueData)
+        });
+
+        alert('Teams validated and saved!');
+        
+        // Reload displays
+        loadNextMatchTeam();
+        loadHistoriqueMatches();
+        
+        // Hide teams section and show selection section
+        document.getElementById('teamsSection').classList.add('hidden');
+        document.querySelector('.selection-section').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error validating teams:', error);
+        alert('Error saving teams. Make sure JSON Server is running on ' + API_URL);
+    }
+}
+
+// Load next match team from JSON Server
+async function loadNextMatchTeam() {
+    try {
+        const response = await fetch(`${API_URL}/nextMatch/1`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.validated && data.teamA.length > 0) {
+                displayNextMatchTeam(data);
+            } else {
+                document.getElementById('nextMatchSection').classList.add('hidden');
+            }
+        } else {
+            // No next match found
+            document.getElementById('nextMatchSection').classList.add('hidden');
+        }
+    } catch (error) {
+        console.error('Error loading next match:', error);
+        document.getElementById('nextMatchSection').classList.add('hidden');
+    }
+}
+
+// Display next match team
+function displayNextMatchTeam(data) {
+    const nextMatchSection = document.getElementById('nextMatchSection');
+    const teamAList = document.getElementById('nextMatchTeamA');
+    const teamBList = document.getElementById('nextMatchTeamB');
+    const dateElement = document.getElementById('nextMatchDate');
+    const teamAContainer = teamAList.closest('.team');
+    const teamBContainer = teamBList.closest('.team');
+
+    nextMatchSection.classList.remove('hidden');
+
+    // Determine team colors (check if KHALID is in teamA or teamB)
+    const hasKhalid = data.teamA.includes('KHALID') || data.teamB.includes('KHALID');
+    let teamAIsRed;
+
+    if (hasKhalid) {
+        teamAIsRed = data.teamA.includes('KHALID');
+    } else {
+        // Random assignment if KHALID not playing
+        teamAIsRed = Math.random() < 0.5;
+    }
+
+    // Remove existing color classes
+    teamAContainer.classList.remove('team-red', 'team-green');
+    teamBContainer.classList.remove('team-red', 'team-green');
+
+    // Assign colors
+    if (teamAIsRed) {
+        teamAContainer.classList.add('team-red');
+        teamBContainer.classList.add('team-green');
+    } else {
+        teamAContainer.classList.add('team-green');
+        teamBContainer.classList.add('team-red');
+    }
+
+    // Display teams
+    teamAList.innerHTML = '';
+    teamBList.innerHTML = '';
+
+    data.teamA.forEach(player => {
+        const li = document.createElement('li');
+        li.textContent = player;
+        teamAList.appendChild(li);
+    });
+
+    data.teamB.forEach(player => {
+        const li = document.createElement('li');
+        li.textContent = player;
+        teamBList.appendChild(li);
+    });
+
+    // Display date
+    const date = new Date(data.date);
+    dateElement.textContent = `Match Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+}
+
+// Load historique matches from JSON Server
+async function loadHistoriqueMatches() {
+    try {
+        const response = await fetch(`${API_URL}/historique?_sort=date&_order=desc`);
+        
+        if (response.ok) {
+            const matches = await response.json();
+            displayHistoriqueMatches(matches);
+        } else {
+            document.getElementById('historiqueList').innerHTML = '<p class="no-matches">No match history found.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading historique:', error);
+        document.getElementById('historiqueList').innerHTML = '<p class="no-matches">Error loading match history. Make sure JSON Server is running.</p>';
+    }
+}
+
+// Display historique matches
+function displayHistoriqueMatches(matches) {
+    const historiqueList = document.getElementById('historiqueList');
+    
+    if (matches.length === 0) {
+        historiqueList.innerHTML = '<p class="no-matches">No match history yet.</p>';
+        return;
+    }
+
+    historiqueList.innerHTML = '';
+
+    matches.forEach(match => {
+        const matchCard = document.createElement('div');
+        matchCard.className = 'match-card';
+
+        const date = new Date(match.date);
+        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+        matchCard.innerHTML = `
+            <div class="match-header">
+                <h3>Match - ${dateStr}</h3>
+            </div>
+            <div class="match-teams">
+                <div class="match-team">
+                    <h4>Team A</h4>
+                    <ul>
+                        ${match.teamA.map(player => `<li>${player}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="match-team">
+                    <h4>Team B</h4>
+                    <ul>
+                        ${match.teamB.map(player => `<li>${player}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        historiqueList.appendChild(matchCard);
+    });
+}
+
 // Initialize app (only after authentication)
 function initApp() {
     // Event listeners
     document.getElementById('generateBtn').addEventListener('click', generateTeams);
     document.getElementById('reshuffleBtn').addEventListener('click', generateTeams);
+    document.getElementById('validateBtn').addEventListener('click', validateTeams);
     
     // Initialize player list
     initPlayerList();
+    
+    // Load next match team and historique
+    loadNextMatchTeam();
+    loadHistoriqueMatches();
 }
 
 

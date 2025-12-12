@@ -48,7 +48,30 @@
                         <ul id="teamB" class="team-list"></ul>
                     </div>
                 </div>
-                <button id="reshuffleBtn" class="reshuffle-btn">Reshuffle Teams</button>
+                <div class="team-actions">
+                    <button id="reshuffleBtn" class="reshuffle-btn">Reshuffle Teams</button>
+                    <button id="validateBtn" class="validate-btn">Validate Teams</button>
+                </div>
+            </div>
+
+            <div id="nextMatchSection" class="next-match-section hidden">
+                <h2>Next Match Team</h2>
+                <div class="teams-container">
+                    <div class="team team-a">
+                        <h3>Team A</h3>
+                        <ul id="nextMatchTeamA" class="team-list"></ul>
+                    </div>
+                    <div class="team team-b">
+                        <h3>Team B</h3>
+                        <ul id="nextMatchTeamB" class="team-list"></ul>
+                    </div>
+                </div>
+                <p class="match-date" id="nextMatchDate"></p>
+            </div>
+
+            <div id="historiqueSection" class="historique-section">
+                <h2>Historique Matches</h2>
+                <div id="historiqueList" class="historique-list"></div>
             </div>
         </div>
     </div>
