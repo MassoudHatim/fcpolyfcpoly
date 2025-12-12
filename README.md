@@ -33,3 +33,7 @@ A static website for generating balanced football teams for 5v5 or 6v6 matches.
 4. Click "Generate Teams" to create balanced teams
 5. Use "Reshuffle Teams" to regenerate with different combinations
 
+## Password
+
+The site is password protected. Default password: `fcpoly2024`
+

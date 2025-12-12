@@ -77,21 +77,21 @@ if (document.readyState === 'loading') {
     checkAuth();
 }
 
-// Player database with strength tiers and conflicts
+// Player database with position tiers and conflicts
 const players = {
-    // Top players (midfield) - equal strength
-    'KHALID': { tier: 'top', conflicts: [] },
-    'MEHDI': { tier: 'top', conflicts: [] },
-    'SOUFIANE': { tier: 'top', conflicts: [] },
-    'SAID': { tier: 'top', conflicts: [] },
+    // Midfield players
+    'KHALID': { tier: 'midfield', conflicts: [] },
+    'MEHDI': { tier: 'midfield', conflicts: [] },
+    'SOUFIANE': { tier: 'midfield', conflicts: [] },
+    'SAID': { tier: 'midfield', conflicts: [] },
     
-    // Less players
-    'YOUSSEF': { tier: 'less', conflicts: ['AYOUBE'] },
-    'AYMENE': { tier: 'less', conflicts: [] },
-    'AYOUBE': { tier: 'less', conflicts: ['ISSAM', 'YOUSSEF', 'MOHAMMED'] },
-    'SAAD': { tier: 'less', conflicts: [] },
+    // Everywhere players
+    'AYMENE': { tier: 'everywhere', conflicts: [] },
+    'AYOUBE': { tier: 'everywhere', conflicts: ['ISSAM', 'YOUSSEF', 'MOHAMMED'] },
+    'SAAD': { tier: 'everywhere', conflicts: [] },
     
     // Back players
+    'YOUSSEF': { tier: 'back', conflicts: ['AYOUBE'] },
     'AKD': { tier: 'back', conflicts: [] },
     'KAMAL': { tier: 'back', conflicts: [] },
     'MOHAMMED TATI': { tier: 'back', conflicts: [] },
@@ -100,17 +100,9 @@ const players = {
     'ISSAM': { tier: 'attacker', conflicts: ['AYOUBE', 'ADIL'] },
     'MOHAMMED': { tier: 'attacker', conflicts: ['AYOUBE'] }, // 50% conflict
     
-    // Less players
-    'ADIL': { tier: 'less', conflicts: ['ISSAM'] },
-    'ABDELLAH': { tier: 'less', conflicts: [] }
-};
-
-// Strength values for balancing
-const tierStrength = {
-    'top': 5,
-    'attacker': 4,
-    'back': 3,
-    'less': 2
+    // Everywhere players
+    'ADIL': { tier: 'everywhere', conflicts: ['ISSAM'] },
+    'ABDELLAH': { tier: 'everywhere', conflicts: [] }
 };
 
 let selectedPlayers = new Set();
@@ -123,11 +115,11 @@ function initPlayerList() {
     
     // Define the 12 players to preselect
     const preselectedPlayers = [
-        'KHALID', 'MEHDI', 'SOUFIANE', 'SAID',  // Top players
-        'YOUSSEF', 'AYOUBE',                     // Less players (selected)
+        'KHALID', 'MEHDI', 'SOUFIANE', 'SAID',  // Midfield players
+        'YOUSSEF', 'AYOUBE',                     // Back and everywhere players
         'AKD', 'KAMAL', 'MOHAMMED TATI',         // Back players
         'ISSAM', 'MOHAMMED',                     // Attackers
-        'ADIL'                                    // Less player
+        'ADIL'                                    // Everywhere player
     ];
     
     Object.keys(players).forEach(playerName => {
@@ -179,6 +171,32 @@ function updateGenerateButton() {
     }
 }
 
+// Calculate tier distribution balance score (lower is better)
+function calculateTierBalance(teamA, teamB) {
+    const tierCounts = { 'midfield': 0, 'attacker': 0, 'back': 0, 'everywhere': 0 };
+    const teamATiers = { 'midfield': 0, 'attacker': 0, 'back': 0, 'everywhere': 0 };
+    const teamBTiers = { 'midfield': 0, 'attacker': 0, 'back': 0, 'everywhere': 0 };
+    
+    // Count tiers in each team
+    teamA.forEach(player => {
+        const tier = players[player]?.tier || 'everywhere';
+        teamATiers[tier]++;
+    });
+    
+    teamB.forEach(player => {
+        const tier = players[player]?.tier || 'everywhere';
+        teamBTiers[tier]++;
+    });
+    
+    // Calculate imbalance score (sum of absolute differences per tier)
+    let imbalance = 0;
+    Object.keys(tierCounts).forEach(tier => {
+        imbalance += Math.abs(teamATiers[tier] - teamBTiers[tier]);
+    });
+    
+    return imbalance;
+}
+
 // Generate balanced teams
 function generateTeams() {
     const playerArray = Array.from(selectedPlayers);
@@ -190,18 +208,18 @@ function generateTeams() {
     
     // Try multiple times to find a good balance
     let bestTeams = null;
-    let bestDifference = Infinity;
+    let bestBalance = Infinity;
     
     for (let attempt = 0; attempt < 50; attempt++) {
         const teams = createTeams(playerArray);
-        const difference = Math.abs(calculateTeamStrength(teams.teamA) - calculateTeamStrength(teams.teamB));
+        const balance = calculateTierBalance(teams.teamA, teams.teamB);
         
-        if (difference < bestDifference) {
-            bestDifference = difference;
+        if (balance < bestBalance) {
+            bestBalance = balance;
             bestTeams = teams;
             
             // If we found a perfect balance, use it
-            if (difference === 0) break;
+            if (balance === 0) break;
         }
     }
     
@@ -323,27 +341,27 @@ function createTeams(playerArray) {
     // Shuffle remaining players for randomness
     const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
     
-    // Helper function to calculate team strength from playerTeamMap
-    function calculateTeamStrengthFromMap(teamLetter) {
-        let strength = 0;
+    // Helper function to count tiers in a team from playerTeamMap
+    function countTiersInTeam(teamLetter) {
+        const tierCounts = { 'midfield': 0, 'attacker': 0, 'back': 0, 'everywhere': 0 };
         playerTeamMap.forEach((team, player) => {
             if (team === teamLetter) {
-                strength += (tierStrength[players[player].tier] || 0);
+                const tier = players[player]?.tier || 'everywhere';
+                tierCounts[tier]++;
             }
         });
-        return strength;
+        return tierCounts;
     }
     
     // Distribute remaining players to balance teams
     shuffledRemaining.forEach((player) => {
-        const teamAStrength = calculateTeamStrengthFromMap('A');
-        const teamBStrength = calculateTeamStrengthFromMap('B');
+        const playerTier = players[player]?.tier || 'everywhere';
         
-        // Also check player count for balance
+        // Check player count for balance
         const teamACount = Array.from(playerTeamMap.values()).filter(t => t === 'A').length;
         const teamBCount = Array.from(playerTeamMap.values()).filter(t => t === 'B').length;
         
-        // Balance by both strength and count - prioritize count balance
+        // Prioritize count balance
         if (teamACount < teamBCount) {
             // Team A has fewer players, assign to A
             playerTeamMap.set(player, 'A');
@@ -351,8 +369,12 @@ function createTeams(playerArray) {
             // Team B has fewer players, assign to B
             playerTeamMap.set(player, 'B');
         } else {
-            // Equal count, balance by strength
-            if (teamAStrength <= teamBStrength) {
+            // Equal count, balance by tier distribution
+            const teamATiers = countTiersInTeam('A');
+            const teamBTiers = countTiersInTeam('B');
+            
+            // Assign to team with fewer players of this tier
+            if (teamATiers[playerTier] <= teamBTiers[playerTier]) {
                 playerTeamMap.set(player, 'A');
             } else {
                 playerTeamMap.set(player, 'B');
@@ -384,13 +406,6 @@ function createTeams(playerArray) {
     teamB.push(...teamBPlayers);
     
     return { teamA, teamB };
-}
-
-// Calculate team strength
-function calculateTeamStrength(team) {
-    return team.reduce((total, player) => {
-        return total + (tierStrength[players[player].tier] || 0);
-    }, 0);
 }
 
 // Display teams
