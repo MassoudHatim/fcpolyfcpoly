@@ -1,78 +1,28 @@
-// Password protection - direct password comparison
-const SITE_PASSWORD = 'fcpoly2024';
-
-// Check authentication
-function checkAuth() {
-    // Check if already authenticated in this session
-    if (sessionStorage.getItem('authenticated') === 'true') {
-        showContent();
-        return;
-    }
-    
-    // Show password prompt
+// Initialize app directly (password auth removed for now)
+function initOnLoad() {
+    // Hide password overlay if it exists
     const overlay = document.getElementById('passwordOverlay');
-    const passwordInput = document.getElementById('passwordInput');
-    const passwordSubmit = document.getElementById('passwordSubmit');
-    const passwordError = document.getElementById('passwordError');
-    
-    // Check if elements exist
-    if (!overlay || !passwordInput || !passwordSubmit || !passwordError) {
-        console.error('Password protection elements not found');
-        return;
+    if (overlay) {
+        overlay.classList.add('hidden');
     }
     
-    overlay.classList.remove('hidden');
-    
-    // Handle password submission
-    function handleSubmit() {
-        const enteredPassword = passwordInput.value;
-        
-        // Compare passwords directly
-        if (enteredPassword === SITE_PASSWORD) {
-            sessionStorage.setItem('authenticated', 'true');
-            showContent();
-        } else {
-            passwordError.textContent = 'Incorrect password. Please try again.';
-            passwordInput.value = '';
-            passwordInput.focus();
-        }
+    // Show main content
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) {
+        mainContent.style.display = 'block';
     }
     
-    passwordSubmit.addEventListener('click', handleSubmit);
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleSubmit();
-        }
-    });
-    
-    // Clear cache button
-    const clearCacheBtn = document.getElementById('clearCacheBtn');
-    if (clearCacheBtn) {
-        clearCacheBtn.addEventListener('click', () => {
-            // Clear session storage
-            sessionStorage.clear();
-            // Clear local storage
-            localStorage.clear();
-            // Reload page with cache bypass
-            window.location.reload(true);
-        });
-    }
-}
-
-function showContent() {
-    document.getElementById('passwordOverlay').classList.add('hidden');
-    document.getElementById('mainContent').style.display = 'block';
-    // Initialize app after showing content
+    // Initialize app
     if (typeof initApp === 'function') {
         initApp();
     }
 }
 
-// Initialize authentication check on page load (wait for DOM)
+// Initialize on page load (wait for DOM)
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkAuth);
+    document.addEventListener('DOMContentLoaded', initOnLoad);
 } else {
-    checkAuth();
+    initOnLoad();
 }
 
 // Player database with position tiers and conflicts
@@ -501,8 +451,4 @@ function initApp() {
     initPlayerList();
 }
 
-// Initialize app if already authenticated on page load
-if (sessionStorage.getItem('authenticated') === 'true') {
-    // App will be initialized by showContent() which is called by checkAuth()
-}
 
