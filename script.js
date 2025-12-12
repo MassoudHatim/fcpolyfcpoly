@@ -1,20 +1,8 @@
-// Password protection - using SHA-256 hash
-// Hash password using SHA-256
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
-
-// Pre-computed SHA-256 hash of 'fcpoly2024'
-// To change password: hashPassword('yournewpassword').then(console.log) and replace the hash below
-const SITE_PASSWORD_HASH = '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4';
+// Password protection - direct password comparison
+const SITE_PASSWORD = 'fcpoly2024';
 
 // Check authentication
-async function checkAuth() {
+function checkAuth() {
     // Check if already authenticated in this session
     if (sessionStorage.getItem('authenticated') === 'true') {
         showContent();
@@ -36,14 +24,11 @@ async function checkAuth() {
     overlay.classList.remove('hidden');
     
     // Handle password submission
-    async function handleSubmit() {
+    function handleSubmit() {
         const enteredPassword = passwordInput.value;
         
-        // Hash the entered password
-        const enteredHash = await hashPassword(enteredPassword);
-        
-        // Compare hashes
-        if (enteredHash === SITE_PASSWORD_HASH) {
+        // Compare passwords directly
+        if (enteredPassword === SITE_PASSWORD) {
             sessionStorage.setItem('authenticated', 'true');
             showContent();
         } else {
@@ -54,9 +39,9 @@ async function checkAuth() {
     }
     
     passwordSubmit.addEventListener('click', handleSubmit);
-    passwordInput.addEventListener('keypress', async (e) => {
+    passwordInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            await handleSubmit();
+            handleSubmit();
         }
     });
     
