@@ -777,6 +777,62 @@ function displayNextMatchTeam(data) {
     // Display date
     const date = new Date(data.date);
     dateElement.textContent = `Match Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    
+    // Display result if exists
+    const resultAInput = document.getElementById('nextMatchResultA');
+    const resultBInput = document.getElementById('nextMatchResultB');
+    
+    if (data.result) {
+        // Parse result like "2-5" or "Team A 2-5 Team B"
+        const resultMatch = data.result.match(/(\d+)\s*-\s*(\d+)/);
+        if (resultMatch) {
+            resultAInput.value = resultMatch[1];
+            resultBInput.value = resultMatch[2];
+        } else {
+            resultAInput.value = '';
+            resultBInput.value = '';
+        }
+    } else {
+        resultAInput.value = '';
+        resultBInput.value = '';
+    }
+}
+
+// Save next match result
+async function saveNextMatchResult() {
+    const resultA = document.getElementById('nextMatchResultA').value;
+    const resultB = document.getElementById('nextMatchResultB').value;
+    
+    if (!resultA || resultA === '' || !resultB || resultB === '') {
+        alert('Please enter scores for both teams');
+        return;
+    }
+    
+    try {
+        // Load current next match data
+        const currentData = await DataService.loadNextMatch();
+        
+        if (!currentData) {
+            alert('No next match found');
+            return;
+        }
+        
+        // Update result in format "Team A 2-5 Team B"
+        const result = `Team A ${resultA}-${resultB} Team B`;
+        currentData.result = result;
+        
+        // Save updated data
+        await DataService.saveNextMatch(currentData);
+        
+        alert('Result saved successfully!');
+        
+        // Reload display
+        displayNextMatchTeam(currentData);
+        
+    } catch (error) {
+        console.error('Error saving result:', error);
+        alert('Error saving result');
+    }
 }
 
 // Load historique matches (localStorage + optional API)
@@ -874,6 +930,7 @@ function initApp() {
     document.getElementById('generateBtn').addEventListener('click', generateTeams);
     document.getElementById('reshuffleBtn').addEventListener('click', generateTeams);
     document.getElementById('validateBtn').addEventListener('click', validateTeams);
+    document.getElementById('saveNextMatchResult').addEventListener('click', saveNextMatchResult);
     
     // Initialize player list
     initPlayerList();
