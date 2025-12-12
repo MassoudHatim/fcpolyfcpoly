@@ -632,7 +632,7 @@ function displayTeams() {
         teamBList.appendChild(li);
     });
     
-    // Set default date/time to current date/time
+    // Set default date/time to current date with 7:00 PM (19:00)
     const matchDateTimeInput = document.getElementById('matchDateTime');
     if (matchDateTimeInput) {
         const now = new Date();
@@ -640,8 +640,8 @@ function displayTeams() {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const hours = '19'; // 7:00 PM
+        const minutes = '00';
         matchDateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 }
