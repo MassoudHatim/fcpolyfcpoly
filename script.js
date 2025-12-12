@@ -1,17 +1,5 @@
-// Initialize app directly (password auth removed for now)
+// Initialize app
 function initOnLoad() {
-    // Hide password overlay if it exists
-    const overlay = document.getElementById('passwordOverlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-    }
-    
-    // Show main content
-    const mainContent = document.getElementById('mainContent');
-    if (mainContent) {
-        mainContent.style.display = 'block';
-    }
-    
     // Initialize app
     if (typeof initApp === 'function') {
         initApp();
