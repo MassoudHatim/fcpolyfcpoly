@@ -53,8 +53,167 @@ const players = {
     'ABDELLAH': { tier: 'everywhere', conflicts: [] }
 };
 
-// JSON Server configuration
-const API_URL = 'http://localhost:3000'; // Change this to your JSON Server URL
+// Data Service Layer - Handles localStorage and optional API sync
+const DataService = {
+    // Get API URL (empty string means localStorage only)
+    getApiUrl() {
+        if (typeof window !== 'undefined' && typeof getApiUrl === 'function') {
+            return getApiUrl();
+        }
+        // Fallback: check CONFIG if available
+        if (typeof CONFIG !== 'undefined' && CONFIG.API_URL) {
+            return CONFIG.API_URL;
+        }
+        return '';
+    },
+    
+    // Check if API is available
+    async checkApiAvailable() {
+        const apiUrl = this.getApiUrl();
+        if (!apiUrl) return false;
+        
+        try {
+            const response = await fetch(`${apiUrl}/nextMatch/1`, { 
+                method: 'GET',
+                signal: AbortSignal.timeout(3000) // 3 second timeout
+            });
+            return response.ok || response.status === 404; // 404 is OK, means server is up
+        } catch (error) {
+            return false;
+        }
+    },
+    
+    // Save next match (localStorage + optional API)
+    async saveNextMatch(data) {
+        // Always save to localStorage first
+        localStorage.setItem(CONFIG.STORAGE_KEYS.NEXT_MATCH, JSON.stringify(data));
+        
+        // Try to sync with API if available
+        const apiUrl = this.getApiUrl();
+        if (apiUrl) {
+            try {
+                const apiData = { id: 1, ...data };
+                await fetch(`${apiUrl}/nextMatch/1`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(apiData)
+                }).catch(() => {
+                    // If PUT fails, try POST
+                    return fetch(`${apiUrl}/nextMatch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(apiData)
+                    });
+                });
+            } catch (error) {
+                console.log('API sync failed, using localStorage only:', error);
+            }
+        }
+    },
+    
+    // Load next match (try API first, fallback to localStorage)
+    async loadNextMatch() {
+        const apiUrl = this.getApiUrl();
+        
+        // Try API first if available
+        if (apiUrl) {
+            try {
+                const response = await fetch(`${apiUrl}/nextMatch/1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.validated && data.teamA && data.teamA.length > 0) {
+                        // Sync to localStorage
+                        localStorage.setItem(CONFIG.STORAGE_KEYS.NEXT_MATCH, JSON.stringify(data));
+                        return data;
+                    }
+                }
+            } catch (error) {
+                console.log('API load failed, using localStorage:', error);
+            }
+        }
+        
+        // Fallback to localStorage
+        const stored = localStorage.getItem(CONFIG.STORAGE_KEYS.NEXT_MATCH);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                console.error('Error parsing stored next match:', e);
+            }
+        }
+        
+        return null;
+    },
+    
+    // Save historique match (localStorage + optional API)
+    async saveHistoriqueMatch(data) {
+        // Load existing historique from localStorage
+        let historique = this.loadHistoriqueMatchesSync();
+        
+        // Add new match
+        historique.unshift(data); // Add to beginning
+        
+        // Keep only last 50 matches
+        if (historique.length > 50) {
+            historique = historique.slice(0, 50);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem(CONFIG.STORAGE_KEYS.HISTORIQUE, JSON.stringify(historique));
+        
+        // Try to sync with API if available
+        const apiUrl = this.getApiUrl();
+        if (apiUrl) {
+            try {
+                await fetch(`${apiUrl}/historique`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } catch (error) {
+                console.log('API sync failed, using localStorage only:', error);
+            }
+        }
+    },
+    
+    // Load historique matches (try API first, fallback to localStorage)
+    async loadHistoriqueMatches() {
+        const apiUrl = this.getApiUrl();
+        
+        // Try API first if available
+        if (apiUrl) {
+            try {
+                const response = await fetch(`${apiUrl}/historique?_sort=date&_order=desc`);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Sync to localStorage
+                    localStorage.setItem(CONFIG.STORAGE_KEYS.HISTORIQUE, JSON.stringify(data));
+                    return data;
+                }
+            } catch (error) {
+                console.log('API load failed, using localStorage:', error);
+            }
+        }
+        
+        // Fallback to localStorage
+        return this.loadHistoriqueMatchesSync();
+    },
+    
+    // Load historique from localStorage synchronously
+    loadHistoriqueMatchesSync() {
+        const stored = localStorage.getItem(CONFIG.STORAGE_KEYS.HISTORIQUE);
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                // Sort by date descending
+                return data.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } catch (e) {
+                console.error('Error parsing stored historique:', e);
+            }
+        }
+        return [];
+    }
+};
 
 let selectedPlayers = new Set();
 let currentTeams = { teamA: [], teamB: [] };
@@ -486,7 +645,7 @@ function displayTeams() {
     });
 }
 
-// Validate teams and save to JSON Server
+// Validate teams and save (localStorage + optional API)
 async function validateTeams() {
     if (!currentTeams.teamA.length || !currentTeams.teamB.length) {
         alert('Please generate teams first');
@@ -494,35 +653,16 @@ async function validateTeams() {
     }
 
     try {
-        // Save as next match team
         const matchDate = new Date().toISOString();
         const nextMatchData = {
-            id: 1, // Single next match record
             date: matchDate,
             teamA: currentTeams.teamA,
             teamB: currentTeams.teamB,
             validated: true
         };
 
-        // Update or create next match
-        const response = await fetch(`${API_URL}/nextMatch/1`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(nextMatchData)
-        });
-
-        if (!response.ok) {
-            // If PUT fails, try POST
-            await fetch(`${API_URL}/nextMatch`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(nextMatchData)
-            });
-        }
+        // Save next match (localStorage + optional API)
+        await DataService.saveNextMatch(nextMatchData);
 
         // Save to historique matches
         const historiqueData = {
@@ -531,13 +671,7 @@ async function validateTeams() {
             teamB: currentTeams.teamB
         };
 
-        await fetch(`${API_URL}/historique`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(historiqueData)
-        });
+        await DataService.saveHistoriqueMatch(historiqueData);
 
         alert('Teams validated and saved!');
         
@@ -551,24 +685,18 @@ async function validateTeams() {
         
     } catch (error) {
         console.error('Error validating teams:', error);
-        alert('Error saving teams. Make sure JSON Server is running on ' + API_URL);
+        alert('Error saving teams. Data saved locally.');
     }
 }
 
-// Load next match team from JSON Server
+// Load next match team (localStorage + optional API)
 async function loadNextMatchTeam() {
     try {
-        const response = await fetch(`${API_URL}/nextMatch/1`);
+        const data = await DataService.loadNextMatch();
         
-        if (response.ok) {
-            const data = await response.json();
-            if (data.validated && data.teamA.length > 0) {
-                displayNextMatchTeam(data);
-            } else {
-                document.getElementById('nextMatchSection').classList.add('hidden');
-            }
+        if (data && data.validated && data.teamA && data.teamA.length > 0) {
+            displayNextMatchTeam(data);
         } else {
-            // No next match found
             document.getElementById('nextMatchSection').classList.add('hidden');
         }
     } catch (error) {
@@ -633,20 +761,14 @@ function displayNextMatchTeam(data) {
     dateElement.textContent = `Match Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }
 
-// Load historique matches from JSON Server
+// Load historique matches (localStorage + optional API)
 async function loadHistoriqueMatches() {
     try {
-        const response = await fetch(`${API_URL}/historique?_sort=date&_order=desc`);
-        
-        if (response.ok) {
-            const matches = await response.json();
-            displayHistoriqueMatches(matches);
-        } else {
-            document.getElementById('historiqueList').innerHTML = '<p class="no-matches">No match history found.</p>';
-        }
+        const matches = await DataService.loadHistoriqueMatches();
+        displayHistoriqueMatches(matches);
     } catch (error) {
         console.error('Error loading historique:', error);
-        document.getElementById('historiqueList').innerHTML = '<p class="no-matches">Error loading match history. Make sure JSON Server is running.</p>';
+        document.getElementById('historiqueList').innerHTML = '<p class="no-matches">Error loading match history.</p>';
     }
 }
 

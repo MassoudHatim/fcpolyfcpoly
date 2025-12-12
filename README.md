@@ -30,41 +30,88 @@ A static website for generating balanced football teams for 5v5 or 6v6 matches.
 - `script.js` - Team generation logic and player database
 - `db.json` - JSON Server database file
 
+## Architecture
+
+This app uses a **hybrid storage approach**:
+- **Primary Storage**: localStorage (works offline, no backend needed)
+- **Optional Sync**: JSON Server API (for multi-device sync when backend is available)
+
+The app works **standalone** without any backend, but can sync with a JSON Server when configured.
+
 ## Setup
 
-### 1. Install JSON Server
+### Option 1: Standalone Mode (No Backend Required) ✅
 
-```bash
-npm install -g json-server
-```
+The app works out of the box using localStorage. No setup needed!
 
-### 2. Start JSON Server
+1. Open `index.html` in your browser
+2. Start using the app - all data is saved locally
 
-```bash
-json-server --watch db.json --port 3000
-```
+### Option 2: With JSON Server Backend (For Multi-Device Sync)
 
-The server will run on `http://localhost:3000`
+#### Local Development
 
-### 3. Update API URL (if needed)
+1. **Install JSON Server**
+   ```bash
+   npm install -g json-server
+   ```
 
-If your JSON Server runs on a different URL or port, update the `API_URL` constant in `script.js`:
+2. **Start JSON Server**
+   ```bash
+   json-server --watch db.json --port 3000
+   ```
+
+3. **Configure API URL** in `config.js`:
+   ```javascript
+   const CONFIG = {
+       API_URL: 'http://localhost:3000', // Your JSON Server URL
+       ENABLE_API_SYNC: true
+   };
+   ```
+
+#### Hosted Backend (Recommended for Production)
+
+The app automatically detects if you're running locally and uses the appropriate API URL. For production, host your JSON Server on:
+
+- **Render** (Free tier available)
+- **Railway** (Free tier available)
+- **Heroku** (Paid)
+- **Any Node.js hosting service**
+
+Then update `config.js` with your hosted URL:
 
 ```javascript
-const API_URL = 'http://localhost:3000'; // Change this if needed
+const CONFIG = {
+    API_URL: 'https://your-app.onrender.com', // Your hosted URL
+    ENABLE_API_SYNC: true
+};
 ```
+
+### Backend Hosting Guide
+
+See [BACKEND_SETUP.md](./BACKEND_SETUP.md) for detailed instructions on hosting JSON Server.
 
 ## Usage
 
-1. Make sure JSON Server is running (see Setup above)
-2. Open `index.html` in a browser
-3. Click on player names to select/deselect them
-4. Select exactly 10 or 12 players
-5. Click "Generate Teams" to create balanced teams
-6. Use "Reshuffle Teams" to regenerate with different combinations
-7. Click "Validate Teams" to save the teams as the next match and add to history
-8. View the "Next Match Team" section to see the validated team
-9. View the "Historique Matches" section to see all past matches with dates
+1. Open `index.html` in a browser (no backend required!)
+2. Click on player names to select/deselect them
+3. Select exactly 10 or 12 players
+4. Click "Generate Teams" to create balanced teams
+5. Use "Reshuffle Teams" to regenerate with different combinations
+6. Click "Validate Teams" to save the teams as the next match and add to history
+7. View the "Next Match Team" section to see the validated team
+8. View the "Historique Matches" section to see all past matches with dates
+
+**Note**: Data is automatically saved to localStorage. If you've configured a backend, it will sync automatically.
+
+## Files
+
+- `index.html` - Main HTML structure
+- `styles.css` - Styling
+- `script.js` - Team generation logic and data service layer
+- `config.js` - API configuration (set your backend URL here)
+- `db.json` - JSON Server database file (for backend)
+- `BACKEND_SETUP.md` - Guide for hosting the backend
 
 ## Password
 
